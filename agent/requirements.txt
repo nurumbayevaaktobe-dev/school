@@ -1,0 +1,7 @@
+# Core dependencies
+python-socketio[client]==5.11.0
+Pillow==10.2.0
+psutil==5.9.7
+mss==9.0.1
+python-dotenv==1.0.0
+requests==2.31.0
