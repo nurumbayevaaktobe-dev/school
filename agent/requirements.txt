@@ -5,3 +5,22 @@ psutil==5.9.7
 mss==9.0.1
 python-dotenv==1.0.0
 requests==2.31.0
+
+# Platform-specific dependencies
+# Install based on your platform:
+
+# Windows only:
+# pywin32==306
+# pygetwindow==0.0.9
+
+# macOS only:
+# pyobjc-framework-Cocoa==10.1
+# pyobjc-framework-Quartz==10.1
+
+# Linux only:
+# python-xlib==0.33
+
+# Note: tkinter is usually included with Python, but if missing:
+# - Windows/macOS: Included with Python installer
+# - Linux: sudo apt-get install python3-tk (Debian/Ubuntu)
+#          sudo yum install python3-tkinter (RedHat/CentOS)

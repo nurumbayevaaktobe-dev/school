@@ -20,6 +20,9 @@ from services.ai_service import ai_service
 from services.compression_service import compressor
 from services.security_service import require_auth, rate_limit, ai_rate_limiter, screenshot_rate_limiter
 
+# Import middleware
+from middleware.error_handler import register_error_handlers
+
 def create_app(config_name='development'):
     """Create and configure Flask app"""
     app = Flask(__name__)
@@ -30,6 +33,9 @@ def create_app(config_name='development'):
 
     # Initialize extensions
     init_extensions(app)
+
+    # Register error handlers
+    register_error_handlers(app)
 
     # Health check endpoint
     @app.route('/health', methods=['GET'])

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import ScreenGrid from './ScreenGrid';
 import AIInsights from '../AI/AIInsights';
+import CodeReview from '../AI/CodeReview';
 import LockControl from '../Interactive/LockControl';
 import PollCreator from '../Interactive/PollCreator';
-import { Users, Brain, Lock, BarChart3 } from 'lucide-react';
+import { Users, Brain, Lock, BarChart3, Code } from 'lucide-react';
 
 const Dashboard = () => {
   const { students, screenData, isConnected } = useWebSocket();
@@ -13,6 +14,7 @@ const Dashboard = () => {
   const tabs = [
     { id: 'monitor', label: 'Monitor', icon: Users },
     { id: 'ai', label: 'AI Insights', icon: Brain },
+    { id: 'codereview', label: 'Code Review', icon: Code },
     { id: 'controls', label: 'Controls', icon: Lock },
     { id: 'polls', label: 'Polls', icon: BarChart3 }
   ];
@@ -79,6 +81,10 @@ const Dashboard = () => {
 
         {activeTab === 'ai' && (
           <AIInsights students={students} screenData={screenData} />
+        )}
+
+        {activeTab === 'codereview' && (
+          <CodeReview students={students} screenData={screenData} />
         )}
 
         {activeTab === 'controls' && (
