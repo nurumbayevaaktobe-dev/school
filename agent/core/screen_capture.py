@@ -1,32 +1,86 @@
+"""Cross-platform screen capture with platform-specific implementations"""
+
 import platform
-import base64
-import io
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 OS = platform.system()
 
+# Import platform-specific implementation
+try:
+    if OS == 'Windows':
+        from platform.windows import WindowsScreenCapture as PlatformCapture
+    elif OS == 'Darwin':  # macOS
+        from platform.macos import MacOSScreenCapture as PlatformCapture
+    else:  # Linux
+        from platform.linux import LinuxScreenCapture as PlatformCapture
+    HAS_PLATFORM_CAPTURE = True
+except ImportError as e:
+    print(f"Warning: Platform-specific capture not available: {e}")
+    HAS_PLATFORM_CAPTURE = False
+    PlatformCapture = None
+
+
 class ScreenCapture:
-    """Cross-platform screenshot capture"""
+    """Cross-platform screenshot capture with platform-specific implementations"""
 
     def __init__(self):
+        """Initialize platform-specific screen capture"""
+        if HAS_PLATFORM_CAPTURE:
+            try:
+                self.platform_capture = PlatformCapture()
+                self.use_platform = True
+                print(f"✅ Using {OS}-specific screen capture")
+            except Exception as e:
+                print(f"⚠️ Platform capture initialization failed: {e}")
+                self.use_platform = False
+                self.platform_capture = None
+        else:
+            print(f"⚠️ No platform-specific capture available for {OS}")
+            self.use_platform = False
+            self.platform_capture = None
+            self._init_fallback()
+
+    def _init_fallback(self):
+        """Initialize fallback generic capture using mss"""
         try:
-            # Use mss library for cross-platform support
             import mss
             self.sct = mss.mss()
             self.use_mss = True
+            print("✅ Using fallback mss screen capture")
         except ImportError:
-            print("Warning: mss not installed, screenshots disabled")
+            print("❌ No screen capture available (mss not installed)")
             self.use_mss = False
+            self.sct = None
 
     def capture(self):
         """
         Capture screenshot
         Returns: base64 encoded PNG image
         """
-        if not self.use_mss:
-            return None
+        # Try platform-specific first
+        if self.use_platform and self.platform_capture:
+            try:
+                return self.platform_capture.capture()
+            except Exception as e:
+                print(f"Platform capture error: {e}")
+                # Fall through to fallback
 
+        # Fallback to mss
+        if hasattr(self, 'use_mss') and self.use_mss:
+            return self._fallback_capture()
+
+        return None
+
+    def _fallback_capture(self):
+        """Fallback capture using mss"""
         try:
             from PIL import Image
+            import base64
+            import io
 
             # Capture primary monitor
             monitor = self.sct.monitors[1]
@@ -42,48 +96,25 @@ class ScreenCapture:
 
             return base64.b64encode(img_bytes).decode('utf-8')
         except Exception as e:
-            print(f"Capture error: {e}")
+            print(f"Fallback capture error: {e}")
             return None
 
     def get_active_window(self):
         """Get title of active window"""
-        try:
-            if OS == 'Windows':
-                import win32gui
-                hwnd = win32gui.GetForegroundWindow()
-                return win32gui.GetWindowText(hwnd)
-            elif OS == 'Darwin':  # macOS
-                from AppKit import NSWorkspace
-                active_app = NSWorkspace.sharedWorkspace().activeApplication()
-                return active_app['NSApplicationName']
-            else:  # Linux
-                import subprocess
-                result = subprocess.run(
-                    ['xdotool', 'getactivewindow', 'getwindowname'],
-                    capture_output=True,
-                    text=True,
-                    timeout=1
-                )
-                return result.stdout.strip()
-        except:
-            return "Unknown"
+        if self.use_platform and self.platform_capture:
+            try:
+                return self.platform_capture.get_active_window()
+            except Exception as e:
+                print(f"Error getting active window: {e}")
+
+        return "Unknown"
 
     def get_active_app(self):
         """Get name of active application"""
-        try:
-            if OS == 'Windows':
-                import win32gui
-                import win32process
-                import psutil
-                hwnd = win32gui.GetForegroundWindow()
-                _, pid = win32process.GetWindowThreadProcessId(hwnd)
-                process = psutil.Process(pid)
-                return process.name()
-            elif OS == 'Darwin':  # macOS
-                from AppKit import NSWorkspace
-                active_app = NSWorkspace.sharedWorkspace().activeApplication()
-                return active_app['NSApplicationName']
-            else:  # Linux
-                return self.get_active_window()
-        except:
-            return "Unknown"
+        if self.use_platform and self.platform_capture:
+            try:
+                return self.platform_capture.get_active_app()
+            except Exception as e:
+                print(f"Error getting active app: {e}")
+
+        return "Unknown"
